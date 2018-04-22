@@ -1,0 +1,51 @@
+Install rockchip image for Tinkerboard with patch
+
+1)Compile kernel as debian_kernel
+cd rk-linux/kernel$
+patch -p1 < rk_kernel_tinker_wlan.diff
+make ARCH=arm miniarm-rk3288_defconfig -j16
+make zImage ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
+make modules ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
+make ARCH=arm rk3288-miniarm.dtb CROSS_COMPILE=arm-linux-gnueabihf- -j16
+make dtbs CFLAGS=-g ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
+
+2)Make system.img as rockchip wiki instruction
+build/mk-kernel.sh rk3288-miniarm
+build/mk-image.sh -c rk3288 -t boot
+cd cd ../rootfs/
+sudo apt-get install binfmt-support qemu-user-static
+sudo dpkg -i ubuntu-build-service/packages/*
+sudo apt-get install -f
+RELEASE=stretch TARGET=desktop ARCH=armhf ./mk-base-debian.sh
+RELEASE=stretch ARCH=armhf ./mk-rootfs.sh
+./mk-image.sh
+build/mk-image.sh -c rk3288 -t system -r rootfs/linaro-rootfs.img
+
+3)Add modules to system.img
+*check from this sample as follows:
+a) check mount point:
+$ fdisk system.img
+(snip)
+Device       Start     End Sectors  Size Type
+system.img1     64    8063    8000  3.9M Linux filesystem
+system.img2  16384   24575    8192    4M Linux filesystem
+system.img3  24576   32767    8192    4M Linux filesystem
+system.img4  32768  262143  229376  112M EFI System
+system.img5 262144 5242846 4980703  2.4G Linux filesystem
+b) Calculate mount point within ‘mount’ command
+$ sudo mount -o loop,offset=`expr 262144 '*' 512` system.img /mnt/sdx1
+c) Install wifi module with make modules_install
+$ sudo make CLFAGS=-g ARCH=arm INSTALL_MOD_PATH=/mnt/sdx1 modules_install
+  INSTALL crypto/echainiv.ko
+  INSTALL drivers/i2c/i2c-stub.ko
+  INSTALL drivers/net/wireless/rockchip_wlan/rtl8723bs/8723bs.ko
+  DEPMOD  4.4.103
+d) Check if succeeded installation
+$ cd /mnt/sdx1/lib/modules/4.4.103/kernel/drivers/net/wireless
+$ ls
+8723bs.ko
+e) umount system.img
+$ sudo umount system.img
+
+4)Flash system.img to sdcard
+build/flash_tool.sh -c rk3288  -d /dev/sdb -p system  -i  out/system.img 
