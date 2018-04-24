@@ -22,7 +22,7 @@ RELEASE=stretch ARCH=armhf ./mk-rootfs.sh
 build/mk-image.sh -c rk3288 -t system -r rootfs/linaro-rootfs.img
 
 3)Add modules to system.img
-*check from this sample as follows:
+*check from this example as follows:
 a) check mount point:
 $ fdisk system.img
 (snip)
@@ -49,3 +49,7 @@ $ sudo umount system.img
 
 4)Flash system.img to sdcard
 build/flash_tool.sh -c rk3288  -d /dev/sdx -p system  -i  out/system.img 
+
+5)Insert SD to your tinkerboard to check wifi works
+
+*Issue:BT doesn't work..now investigating how it works.
