@@ -2,7 +2,7 @@ Install rockchip image for Tinkerboard with patch
 
 1)Compile kernel as debian_kernel
 cd rk-linux/kernel$
-patch -p1 < rk_kernel_tinker_wlan.diff
+patch -p1 < rk_kernel_tinker_wlan_bt.diff
 make ARCH=arm miniarm-rk3288_defconfig -j16
 make zImage ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
 make modules ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
