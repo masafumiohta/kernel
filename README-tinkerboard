@@ -52,4 +52,5 @@ build/flash_tool.sh -c rk3288  -d /dev/sdx -p system  -i  out/system.img
 
 5)Insert SD to your tinkerboard to check wifi works
 
-*Issue:BT doesn't work..now investigating how it works.
+(Updated..uups I forgot that for a long while):please refer to BT patch:
+https://github.com/masafumiohta/bt_rootfs_overlay/blob/master/bt_rootfs_overlay.sh
