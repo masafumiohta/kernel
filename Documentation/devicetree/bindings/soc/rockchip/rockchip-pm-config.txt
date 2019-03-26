@@ -3,6 +3,7 @@
 Required properties:
 - compatible: Should be one of the following.
 - "rockchip,pm-px30" - for PX30 SOCs.
+- "rockchip,pm-rk1808" - for RK1808 SOCs.
 - "rockchip,pm-rk322x" - for RK322x SOCs.
 - "rockchip,pm-rk3288" - for RK3288 SOCs.
 - "rockchip,pm-rk3328" - for RK3328 SOCs.
@@ -41,6 +42,25 @@ Example:
 	};
 
 	rockchip_suspend: rockchip-suspend {
+		compatible = "rockchip,pm-rk1808";
+		status = "disabled";
+		rockchip,sleep-debug-en = <1>;
+		rockchip,sleep-mode-config = <
+			(0
+			| RKPM_SLP_ARMOFF
+			| RKPM_SLP_PMU_PMUALIVE_32K
+			| RKPM_SLP_PMU_DIS_OSC
+			)
+		>;
+		rockchip,wakeup-config = <
+			(0
+			| RKPM_CLUSTER_WKUP_EN
+			| RKPM_GPIO_WKUP_EN
+			)
+		>;
+	};
+
+	rockchip_suspend: rockchip-suspend {
 		compatible = "rockchip,pm-rk322x";
 		status = "disabled";
 		rockchip,sleep-mode-config = <
@@ -70,6 +90,28 @@ Example:
 		rockchip,pwm-regulator-config = <
 			(0
 			| PWM2_REGULATOR_EN
+			)
+		>;
+	};
+
+	rockchip_suspend: rockchip-suspend {
+		compatible = "rockchip,pm-rk3308";
+		status = "okay";
+		rockchip,sleep-mode-config = <
+			(0
+			| RKPM_ARMOFF
+			| RKPM_PMU_HW_PLLS_PD
+			| RKPM_DBG_FSM_SOUT
+			)
+		>;
+		rockchip,wakeup-config = <
+			(0
+			| RKPM_GPIO0_WAKEUP_EN
+			)
+		>;
+		rockchip,pwm-regulator-config = <
+			(0
+			| RKPM_PWM_REGULATOR
 			)
 		>;
 	};

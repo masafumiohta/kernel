@@ -1148,7 +1148,7 @@ void usb_disable_interface(struct usb_device *dev, struct usb_interface *intf,
  */
 void usb_disable_device(struct usb_device *dev, int skip_ep0)
 {
-	int i;
+	int i, j;
 	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
 
 	/* getting rid of interfaces will disconnect
@@ -1186,11 +1186,11 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 			 */
 			if (hcd->self.root_hub->quirks &
 			    USB_QUIRK_AUTO_SUSPEND) {
-				for (i = skip_ep0; i < 16; ++i) {
+				for (j = skip_ep0; j < 16; ++j) {
 					usb_hcd_flush_endpoint(dev,
-							       dev->ep_out[i]);
+							       dev->ep_out[j]);
 					usb_hcd_flush_endpoint(dev,
-							       dev->ep_in[i]);
+							       dev->ep_in[j]);
 				}
 			}
 
@@ -1303,6 +1303,11 @@ void usb_enable_interface(struct usb_device *dev,
  * is submitted that needs that bandwidth.  Some other operating systems
  * allocate bandwidth early, when a configuration is chosen.
  *
+ * xHCI reserves bandwidth and configures the alternate setting in
+ * usb_hcd_alloc_bandwidth(). If it fails the original interface altsetting
+ * may be disabled. Drivers cannot rely on any particular alternate
+ * setting being in effect after a failure.
+ *
  * This call is synchronous, and may not be used in an interrupt context.
  * Also, drivers must not change altsettings while urbs are scheduled for
  * endpoints in that interface; all such urbs must first be completed
@@ -1338,6 +1343,12 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 			 alternate);
 		return -EINVAL;
 	}
+	/*
+	 * usb3 hosts configure the interface in usb_hcd_alloc_bandwidth,
+	 * including freeing dropped endpoint ring buffers.
+	 * Make sure the interface endpoints are flushed before that
+	 */
+	usb_disable_interface(dev, iface, false);
 
 	/* Make sure we have enough bandwidth for this alternate interface.
 	 * Remove the current alt setting and add the new alt setting.

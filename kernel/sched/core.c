@@ -75,6 +75,7 @@
 #include <linux/binfmts.h>
 #include <linux/context_tracking.h>
 #include <linux/compiler.h>
+#include <linux/cpufreq_times.h>
 
 #include <asm/switch_to.h>
 #include <asm/tlb.h>
@@ -3358,6 +3359,31 @@ asmlinkage __visible void __sched schedule(void)
 }
 EXPORT_SYMBOL(schedule);
 
+/*
+ * synchronize_rcu_tasks() makes sure that no task is stuck in preempted
+ * state (have scheduled out non-voluntarily) by making sure that all
+ * tasks have either left the run queue or have gone into user space.
+ * As idle tasks do not do either, they must not ever be preempted
+ * (schedule out non-voluntarily).
+ *
+ * schedule_idle() is similar to schedule_preempt_disable() except that it
+ * never enables preemption because it does not call sched_submit_work().
+ */
+void __sched schedule_idle(void)
+{
+       /*
+	* As this skips calling sched_submit_work(), which the idle task does
+	* regardless because that function is a nop when the task is in a
+	* TASK_RUNNING state, make sure this isn't used someplace that the
+	* current task can be in any other state. Note, idle is always in the
+	* TASK_RUNNING state.
+	*/
+	WARN_ON_ONCE(current->state);
+	do {
+		__schedule(false);
+	} while (need_resched());
+}
+
 #ifdef CONFIG_CONTEXT_TRACKING
 asmlinkage __visible void __sched schedule_user(void)
 {
@@ -3944,8 +3970,8 @@ static int __sched_setscheduler(struct task_struct *p,
 	struct rq *rq;
 	int reset_on_fork;
 
-	/* may grab non-irq protected spin_locks */
-	BUG_ON(in_interrupt());
+	/* The pi code expects interrupts enabled */
+	BUG_ON(pi && in_interrupt());
 recheck:
 	/* double check policy once rq lock held */
 	if (policy < 0) {
@@ -8146,11 +8172,9 @@ void sched_destroy_group(struct task_group *tg)
 void sched_offline_group(struct task_group *tg)
 {
 	unsigned long flags;
-	int i;
 
 	/* end participation in shares distribution */
-	for_each_possible_cpu(i)
-		unregister_fair_sched_group(tg, i);
+	unregister_fair_sched_group(tg);
 
 	spin_lock_irqsave(&task_group_lock, flags);
 	list_del_rcu(&tg->list);

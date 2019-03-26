@@ -29,16 +29,14 @@
 #include <linux/slab.h>
 #include <linux/fb.h>
 #include <linux/wakelock.h>
+#include <linux/version.h>
 
 #include "rga2_reg_info.h"
-#include "../rga/rga_type.h"
-//#include "../rga/rga_rop.h"
+#include "rga2_type.h"
+#include "rga2_rop.h"
 #include "rga2.h"
 
-extern unsigned int rga2_ROP3_code[256];
-
-void
-RGA2_reg_get_param(unsigned char *base, struct rga2_req *msg)
+static void RGA2_reg_get_param(unsigned char *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_SRC_INFO;
     RK_U32 *bRGA_SRC_X_FACTOR;
@@ -126,8 +124,7 @@ RGA2_reg_get_param(unsigned char *base, struct rga2_req *msg)
     reg = ((reg & (~m_RGA2_SRC_INFO_SW_SW_SRC_VSCL_MODE)) | (s_RGA2_SRC_INFO_SW_SW_SRC_VSCL_MODE(y_flag)));
 }
 
-void
-RGA2_set_mode_ctrl(u8 *base, struct rga2_req *msg)
+static void RGA2_set_mode_ctrl(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_MODE_CTL;
     RK_U32 reg = 0;
@@ -150,8 +147,7 @@ RGA2_set_mode_ctrl(u8 *base, struct rga2_req *msg)
     *bRGA_MODE_CTL = reg;
 }
 
-void
-RGA2_set_reg_src_info(RK_U8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_src_info(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_SRC_INFO;
     RK_U32 *bRGA_SRC_BASE0, *bRGA_SRC_BASE1, *bRGA_SRC_BASE2;
@@ -313,9 +309,7 @@ RGA2_set_reg_src_info(RK_U8 *base, struct rga2_req *msg)
     *bRGA_SRC_TR_COLOR1 = msg->color_key_max;
 }
 
-
-void
-RGA2_set_reg_dst_info(u8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_dst_info(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_DST_INFO;
     RK_U32 *bRGA_DST_BASE0, *bRGA_DST_BASE1, *bRGA_DST_BASE2, *bRGA_SRC_BASE3;
@@ -570,8 +564,7 @@ RGA2_set_reg_dst_info(u8 *base, struct rga2_req *msg)
     *bRGA_SRC_BASE3 = (RK_U32)s_y_lt_addr;
 }
 
-void
-RGA2_set_reg_alpha_info(u8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_alpha_info(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_ALPHA_CTRL0;
     RK_U32 *bRGA_ALPHA_CTRL1;
@@ -618,8 +611,7 @@ RGA2_set_reg_alpha_info(u8 *base, struct rga2_req *msg)
     }
 }
 
-void
-RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_ALPHA_CTRL0;
     RK_U32 *bRGA_ROP_CTRL0;
@@ -639,14 +631,14 @@ RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
     bRGA_PAT_CON   = (RK_U32 *)(base + RGA2_PAT_CON_OFFSET);
 
     if(msg->rop_mode == 0) {
-	rop_code0 = rga2_ROP3_code[(msg->rop_code & 0xff)];
+	rop_code0 = RGA2_ROP3_code[(msg->rop_code & 0xff)];
     }
     else if(msg->rop_mode == 1) {
-	rop_code0 = rga2_ROP3_code[(msg->rop_code & 0xff)];
+	rop_code0 = RGA2_ROP3_code[(msg->rop_code & 0xff)];
     }
     else if(msg->rop_mode == 2) {
-	rop_code0 = rga2_ROP3_code[(msg->rop_code & 0xff)];
-	rop_code1 = rga2_ROP3_code[(msg->rop_code & 0xff00)>>8];
+	rop_code0 = RGA2_ROP3_code[(msg->rop_code & 0xff)];
+	rop_code1 = RGA2_ROP3_code[(msg->rop_code & 0xff00)>>8];
     }
 
     *bRGA_ROP_CTRL0 = rop_code0;
@@ -659,10 +651,7 @@ RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
 
 }
 
-
-
-void
-RGA2_set_reg_color_palette(RK_U8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_color_palette(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_SRC_BASE0, *bRGA_SRC_INFO, *bRGA_SRC_VIR_INFO, *bRGA_SRC_ACT_INFO, *bRGA_SRC_FG_COLOR, *bRGA_SRC_BG_COLOR;
     RK_U32  *p;
@@ -721,8 +710,7 @@ RGA2_set_reg_color_palette(RK_U8 *base, struct rga2_req *msg)
 
 }
 
-void
-RGA2_set_reg_color_fill(u8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_color_fill(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_CF_GR_A;
     RK_U32 *bRGA_CF_GR_B;
@@ -769,9 +757,7 @@ RGA2_set_reg_color_fill(u8 *base, struct rga2_req *msg)
 	*bRGA_SRC_VIR_INFO = mask_stride << 16;
 }
 
-
-void
-RGA2_set_reg_update_palette_table(RK_U8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_update_palette_table(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_MASK_BASE;
     RK_U32 *bRGA_FADING_CTRL;
@@ -784,8 +770,7 @@ RGA2_set_reg_update_palette_table(RK_U8 *base, struct rga2_req *msg)
 }
 
 
-void
-RGA2_set_reg_update_patten_buff(RK_U8 *base, struct rga2_req *msg)
+static void RGA2_set_reg_update_patten_buff(RK_U8 *base, struct rga2_req *msg)
 {
     u32 *bRGA_PAT_MST;
     u32 *bRGA_PAT_CON;
@@ -816,9 +801,7 @@ RGA2_set_reg_update_patten_buff(RK_U8 *base, struct rga2_req *msg)
     *bRGA_FADING_CTRL = (num << 8) | offset;
 }
 
-
-void
-RGA2_set_pat_info(RK_U8 *base, struct rga2_req *msg)
+static void RGA2_set_pat_info(RK_U8 *base, struct rga2_req *msg)
 {
     u32 *bRGA_PAT_CON;
     u32 *bRGA_FADING_CTRL;
@@ -841,9 +824,7 @@ RGA2_set_pat_info(RK_U8 *base, struct rga2_req *msg)
     *bRGA_FADING_CTRL = (num << 8) | offset;
 }
 
-
-void
-RGA2_set_mmu_info(RK_U8 *base, struct rga2_req *msg)
+static void RGA2_set_mmu_info(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_MMU_CTRL1;
     RK_U32 *bRGA_MMU_SRC_BASE;
@@ -913,7 +894,7 @@ RGA2_gen_reg_info(RK_U8 *base , struct rga2_req *msg)
 
 }
 
-void format_name_convert(uint32_t *df, uint32_t sf)
+static void format_name_convert(uint32_t *df, uint32_t sf)
 {
     /*
     RK_FORMAT_RGBA_8888    = 0x0,
@@ -983,11 +964,12 @@ void format_name_convert(uint32_t *df, uint32_t sf)
 void RGA_MSG_2_RGA2_MSG(struct rga_req *req_rga, struct rga2_req *req)
 {
 	u16 alpha_mode_0, alpha_mode_1;
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 	if (req_rga->render_mode & RGA_BUF_GEM_TYPE_MASK)
 		req->buf_type = RGA_BUF_GEM_TYPE_MASK & RGA_BUF_GEM_TYPE_DMA;
 
 	req_rga->render_mode &= (~RGA_BUF_GEM_TYPE_MASK);
+#endif
 
     if (req_rga->render_mode == 6)
         req->render_mode = update_palette_table_mode;
@@ -1185,7 +1167,7 @@ void RGA_MSG_2_RGA2_MSG(struct rga_req *req_rga, struct rga2_req *req)
     }
 }
 
-void memcpy_img_info(struct rga_img_info_t *dst, struct rga_img_info_32_t *src)
+static void memcpy_img_info(struct rga_img_info_t *dst, struct rga_img_info_32_t *src)
 {
     dst->yrgb_addr = src->yrgb_addr;      /* yrgb    mem addr         */
     dst->uv_addr = src->uv_addr;        /* cb/cr   mem addr         */
@@ -1202,15 +1184,16 @@ void memcpy_img_info(struct rga_img_info_t *dst, struct rga_img_info_32_t *src)
     dst->endian_mode = src->endian_mode; //for BPP
     dst->alpha_swap = src->alpha_swap;
 }
+
 void RGA_MSG_2_RGA2_MSG_32(struct rga_req_32 *req_rga, struct rga2_req *req)
 {
 	u16 alpha_mode_0, alpha_mode_1;
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 	if (req_rga->render_mode & RGA_BUF_GEM_TYPE_MASK)
 		req->buf_type = RGA_BUF_GEM_TYPE_MASK & RGA_BUF_GEM_TYPE_DMA;
 
 	req_rga->render_mode &= (~RGA_BUF_GEM_TYPE_MASK);
-
+#endif
     if (req_rga->render_mode == 6)
         req->render_mode = update_palette_table_mode;
     else if (req_rga->render_mode == 7)
